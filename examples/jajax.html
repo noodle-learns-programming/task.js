@@ -1,0 +1,61 @@
+<html>
+<head><title>task.js examples: returning a task result</title></head>
+<script type="application/javascript" src="../lib/task.js"></script>
+<script type="application/javascript" src="../lib/jquery.js"></script>
+<script type="application/javascript;version=1.8">
+var { spawn, Deferred } = task;
+var iCounter            = 0;
+// promise version of XMLHttpRequest
+function get(url, method) {
+    method = method || "GET";
+    var xhr = new XMLHttpRequest();
+    var deferred = new Deferred();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status >= 400) {
+                var e = new Error(xhr.statusText);
+                e.status = xhr.status;
+                deferred.reject(e);
+            } else {
+                deferred.resolve({
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    responseXML: xhr.responseXML
+                });
+            }
+        }
+    };
+    xhr.open(method, url, true);
+    xhr.send();
+    return deferred.promise;
+}
+var jump = function()
+{
+    $('#status').append('<p style="color:blue;">iCounter:'+(++iCounter)+'</p>');
+    $('#status').append('<p>Nen show o day den biet chuong trinh khong bi stop!');
+    setTimeout(jump, 1000);
+}
+function go() {
+    spawn(function() {
+        $('#result').append('<p style="color:blue;">iCounter:'+(++iCounter)+'</p>');
+        $('#result').append('<p>1.Begin ajax, will delay 3s by server.</p>');
+        $('#result').append('<p>At:'+new Date().toISOString()+'</p>');
+        var res = yield get('http://localhost/info.php');
+        $('#result').append('<p>2.Response from server.</p>')
+        $('#result').append('<p>At:'+new Date().toISOString()+'</p>');
+        $('#result').append('<p style="color:red">'+res.responseText+'</p>');
+        $('#result').append('<p>3.Response is completed.</p>');
+    });
+    jump();
+}
+</script>
+<body onload="go()">
+<table width="100%">
+    <tr>
+        <td style="border: solid 1px black;vertical-align: top;" id="result"></td>
+        <td style="border: solid 1px black;vertical-align: top;" id="status"></td>
+    </tr>
+</table>
+</body>
+</html>
